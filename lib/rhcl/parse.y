@@ -31,6 +31,10 @@ rule
               {
                 {val[0] => val[2]}
               }
+            | IDENTIFIER EQUAL REFERENCE
+              {
+                {val[0] => val[2]}
+              }
             | IDENTIFIER EQUAL object
               {
                 {val[0] => val[2]}
@@ -86,6 +90,10 @@ rule
               val[0]
             }
           | STRING
+            {
+              val[0]
+            }
+          | REFERENCE
             {
               val[0]
             }
@@ -161,6 +169,10 @@ def scan
       yield [:RIGHTBRACE, tok]
     elsif (tok = backup { @ss.scan /"/ })
       yield [:STRING, (backup { @ss.scan_until /("|\z)/ } || '').sub(/"\z/, '')]
+    elsif (tok = backup { @ss.scan /var\..*/ })
+      yield [:REFERENCE, tok]
+    elsif (tok = backup { @ss.scan /[()a-zA-Z_]+(\.[()a-zA-Z_]+)+/ })
+      yield [:REFERENCE, tok]
     else
       identifier = (backup { @ss.scan_until /(\s|\z)/ } || '').sub(/\s\z/, '')
       token_type = :IDENTIFIER
@@ -169,7 +181,7 @@ def scan
         identifier = TRUE_VALUES.include?(identifier)
         token_type = :BOOL
       end
-
+      
       yield [token_type, identifier]
     end
   end
